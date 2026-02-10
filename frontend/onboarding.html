@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tripolingo – Preferences</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <h2>Tell us about your travel preferences</h2>
+
+  <form id="preferencesForm">
+
+    <h3>Travel Styles</h3>
+    <label><input type="checkbox" value="Adventure"> Adventure</label>
+    <label><input type="checkbox" value="Relaxation"> Relaxation</label>
+    <label><input type="checkbox" value="Cultural"> Cultural</label>
+    <label><input type="checkbox" value="Luxury"> Luxury</label>
+
+    <h3>Budget</h3>
+    <select id="budget">
+      <option value="Budget">Budget</option>
+      <option value="Moderate">Moderate</option>
+      <option value="Premium">Premium</option>
+      <option value="Luxury">Luxury</option>
+    </select>
+
+    <h3>Interests</h3>
+    <label><input type="checkbox" value="Food"> Food</label>
+    <label><input type="checkbox" value="Nature"> Nature</label>
+    <label><input type="checkbox" value="History"> History</label>
+    <label><input type="checkbox" value="Photography"> Photography</label>
+
+    <h3>Travel Frequency</h3>
+    <select id="travel_frequency">
+      <option value="Rarely">Rarely</option>
+      <option value="Sometimes">Sometimes</option>
+      <option value="Often">Often</option>
+      <option value="Frequent">Frequent</option>
+    </select>
+
+    <br /><br />
+    <button type="submit">Save Preferences</button>
+
+  </form>
+
+  <script src="preferences.js"></script>
+</body>
+</html>
