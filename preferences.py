@@ -30,19 +30,23 @@ async def save_preferences(user_id: str, data: UserPreferencesSchema):
 
 @router.get("/preferences/{user_id}")
 async def get_preferences(user_id: str):
-    """
-    Fetch user travel preferences
-    """
     result = supabase.table("user_preferences") \
         .select("*") \
         .eq("user_id", user_id) \
-        .single() \
         .execute()
 
     if not result.data:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=404,
             detail="Preferences not found"
         )
 
-    return result.data
+    preferences = result.data[0]
+
+    return {
+        "user_id": preferences["user_id"],
+        "travel_styles": preferences["travel_styles"],
+        "budget": preferences["budget"],
+        "interests": preferences["interests"],
+        "travel_frequency": preferences["travel_frequency"]
+    }
