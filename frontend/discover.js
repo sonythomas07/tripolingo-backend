@@ -1,33 +1,16 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-const destinations = [
-  {
-    name: "Kyoto",
-    country: "Japan",
-    climate: "Temperate",
-    interests: ["History", "Culture", "Food"]
-  },
-  {
-    name: "Bali",
-    country: "Indonesia",
-    climate: "Tropical",
-    interests: ["Nature", "Adventure"]
-  },
-  {
-    name: "Paris",
-    country: "France",
-    climate: "Continental",
-    interests: ["Culture", "Food", "History"]
-  },
-  {
-    name: "Reykjavik",
-    country: "Iceland",
-    climate: "Cold",
-    interests: ["Nature", "Adventure", "Photography"]
-  }
-];
+/* =========================
+   LOAD DISCOVER PAGE
+========================= */
 
-document.addEventListener("DOMContentLoaded", loadDiscover);
+document.addEventListener("DOMContentLoaded", () => {
+  loadDiscover();
+
+  document.getElementById("chat-icon").addEventListener("click", () => {
+    document.getElementById("ai-chat-container").classList.toggle("show");
+  });
+});
 
 async function loadDiscover() {
   const userId = localStorage.getItem("user_id");
@@ -39,66 +22,157 @@ async function loadDiscover() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/preferences/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/recommendations/${userId}`);
 
     if (!response.ok) {
-      throw new Error("Failed to fetch preferences");
+      const text = await response.text();
+      console.error("Backend error:", text);
+      throw new Error("API error");
     }
 
-    const preferences = await response.json();
-    console.log("Preferences from API:", preferences);
+    const recommendations = await response.json();
 
-    displayDestinations(preferences);
+    console.log("Recommendations:", recommendations);
+
+    // ⭐ SAVE globally for AI highlight
+    window.currentRecommendations = recommendations;
+
+    renderDestinations(recommendations);
 
   } catch (error) {
-    console.error(error);
-    alert("Failed to load preferences");
+    console.error("Fetch failed:", error);
   }
 }
 
-function displayDestinations(preferences) {
+/* =========================
+   RENDER DESTINATIONS
+========================= */
+
+function renderDestinations(destinations, highlighted = []) {
+
   const container = document.getElementById("destinations");
   container.innerHTML = "";
 
-  const matched = destinations
-    .map(dest => ({
-      ...dest,
-      match: calculateMatch(preferences, dest)
-    }))
-    .filter(dest => dest.match > 0)
-    .sort((a, b) => b.match - a.match);
-
-  if (matched.length === 0) {
-    container.innerHTML = `<p>No destinations match your preferences yet.</p>`;
+  if (!destinations || destinations.length === 0) {
+    container.innerHTML = "<p>No destinations match your preferences yet.</p>";
     return;
   }
 
-  matched.forEach(dest => {
+  destinations.forEach(dest => {
+
     const card = document.createElement("div");
     card.className = "card";
 
+    // ⭐ AI Highlight
+    if (highlighted.includes(dest.name)) {
+      card.classList.add("highlight-card");
+
+      // 🔥 auto scroll to suggestion
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+
     card.innerHTML = `
       <h3>${dest.name}, ${dest.country}</h3>
-      <p>Climate: ${dest.climate}</p>
-      <p>Match: ${dest.match}%</p>
-      <p>Based on interests: ${dest.interests.join(", ")}</p>
+      <p>Match Score: ${dest.match}%</p>
     `;
 
     container.appendChild(card);
   });
 }
 
-function calculateMatch(preferences, destination) {
-  let score = 0;
+/* =========================
+   🤖 AI CHAT
+========================= */
 
-  const userInterests = preferences.interests.map(i => i.toLowerCase());
-  const destInterests = destination.interests.map(i => i.toLowerCase());
+async function sendMessage() {
 
-  userInterests.forEach(interest => {
-    if (destInterests.includes(interest)) {
-      score += 25;
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const chatMessages = document.getElementById("chat-messages");
+
+  chatMessages.innerHTML += `<div class="user-msg">You: ${message}</div>`;
+  input.value = "";
+
+  const typingId = "typing-" + Date.now();
+  chatMessages.innerHTML += `<div id="${typingId}" class="ai-msg typing">Tripolingo AI is typing...</div>`;
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  const userId = localStorage.getItem("user_id");
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/ai/chat/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    // ⭐ IMPORTANT CHECK
+    if (!res.ok) {
+      throw new Error("Backend returned error");
     }
-  });
 
-  return Math.min(score, 100);
+    const data = await res.json();
+
+    console.log("AI RESPONSE:", data);
+
+    document.getElementById(typingId)?.remove();
+
+    await typeAIMessage(data.reply);
+
+    // ⭐ Highlight only if exists
+    if (data.suggested_destinations?.length && window.currentRecommendations) {
+      renderDestinations(
+        window.currentRecommendations,
+        data.suggested_destinations
+      );
+
+      scrollToSuggested(data.suggested_destinations);
+    }
+
+  } catch (err) {
+    console.error("AI CHAT ERROR:", err);
+    document.getElementById(typingId)?.remove();
+    chatMessages.innerHTML += `<div class="ai-msg" style="color:red">AI connection error.</div>`;
+  }
+}
+
+
+async function typeAIMessage(text) {
+
+  const chatMessages = document.getElementById("chat-messages");
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "ai-msg";
+  msgDiv.innerHTML = "Tripolingo AI: ";
+
+  chatMessages.appendChild(msgDiv);
+
+  for (let i = 0; i < text.length; i++) {
+    msgDiv.innerHTML += text[i];
+    await new Promise(r => setTimeout(r, 8)); // typing speed
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function scrollToSuggested(list) {
+
+  const cards = document.querySelectorAll(".card");
+
+  cards.forEach(card => {
+    const title = card.querySelector("h3").innerText;
+
+    list.forEach(name => {
+      if (title.includes(name)) {
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    });
+  });
 }

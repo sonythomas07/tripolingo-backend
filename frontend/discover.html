@@ -14,9 +14,18 @@
 
   <section id="destinations" class="destinations-grid"></section>
 
-  <!-- Chat icon (AI later) -->
+  <!-- 💬 Chat icon -->
   <div id="chat-icon" title="Chat with Tripolingo AI">💬</div>
 
+  <!-- ✅ ADD THIS AI CHAT BOX -->
+  <div id="ai-chat-container" class="ai-chat">
+    <h3>Tripolingo AI</h3>
+
+    <div id="chat-messages"></div>
+
+    <input id="chat-input" placeholder="Ask about travel..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
 
   <script src="discover.js"></script>
 </body>

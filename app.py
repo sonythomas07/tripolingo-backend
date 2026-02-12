@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from auth import router as auth_router
 from preferences import router as preferences_router
+from recommendations import router as recommendations_router
+from ai_chat import router as ai_router
+
+
 
 app = FastAPI(title="Travel Agent API", version="1.0.0")
 
@@ -23,6 +27,14 @@ app.include_router(
     prefix="/user",
     tags=["User Preferences"]
 )
+
+app.include_router(
+    recommendations_router,
+    tags=["Recommendations"]
+)
+
+app.include_router(ai_router, tags=["AI Assistant"])
+
 
 @app.get("/")
 async def root():
