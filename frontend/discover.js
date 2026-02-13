@@ -5,6 +5,73 @@ const API_BASE_URL = "http://127.0.0.1:8000";
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // 🎬 Add CSS animations (since we're not modifying CSS file)
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .cinematic-glow {
+      animation: cardGlow 0.8s ease-out;
+    }
+
+    @keyframes cardGlow {
+      0%, 100% {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(102, 126, 234, 0.8);
+        transform: scale(1.02);
+      }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #0b0b0b;
+      border: 1px solid #00ffd0;
+      padding: 14px 20px;
+      border-radius: 8px;
+      color: #00ffd0;
+      box-shadow: 0 0 15px #00ffd055;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 10000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .planning-glow {
+      box-shadow: 0 0 30px #00ffd0aa;
+      transition: 0.4s ease;
+    }
+  `;
+  document.head.appendChild(style);
+
   loadDiscover();
 
   document.getElementById("chat-icon").addEventListener("click", () => {
@@ -63,19 +130,45 @@ function renderDestinations(destinations, highlighted = []) {
     const card = document.createElement("div");
     card.className = "card";
 
+    // 🌌 Destination Theme Engine
+    const themeMap = {
+      "Bali": "theme-tropical",
+      "Reykjavik": "theme-ice",
+      "Kyoto": "theme-sakura",
+      "Paris": "theme-luxury"
+    };
+
+    if (themeMap[dest.name]) {
+      card.classList.add(themeMap[dest.name]);
+    }
+
     // ⭐ AI Highlight
     if (highlighted.includes(dest.name)) {
+
       card.classList.add("highlight-card");
 
-      // 🔥 auto scroll to suggestion
+      // 🌌 AI Awareness Animation
       setTimeout(() => {
-        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.add("ai-focus");
+      }, 100);
+
+      // 🎬 Auto scroll cinematic focus
+      setTimeout(() => {
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
       }, 300);
     }
 
     card.innerHTML = `
       <h3>${dest.name}, ${dest.country}</h3>
       <p>Match Score: ${dest.match}%</p>
+
+      <button class="plan-btn" id="plan-btn-${dest.name.replace(/\s+/g, '-')}"
+        onclick="planTrip('${dest.name}','${dest.country}', this)">
+        Plan Trip ✈️
+      </button>
     `;
 
     container.appendChild(card);
@@ -123,6 +216,13 @@ async function sendMessage() {
     document.getElementById(typingId)?.remove();
 
     await typeAIMessage(data.reply);
+
+    // 🌌 AI Background Reaction
+    document.body.classList.add("ai-background-flash");
+
+    setTimeout(() => {
+      document.body.classList.remove("ai-background-flash");
+    }, 800);
 
     // ⭐ Highlight only if exists
     if (data.suggested_destinations?.length && window.currentRecommendations) {
@@ -175,4 +275,93 @@ function scrollToSuggested(list) {
       }
     });
   });
+}
+
+/* =========================
+   🎬 PLAN TRIP (CINEMATIC)
+========================= */
+
+async function planTrip(destination, country, buttonElement) {
+
+  const userId = localStorage.getItem("user_id");
+
+  if (!userId) {
+    showToast("⚠️ Login required");
+    return;
+  }
+
+  // 🎬 Disable button and change text
+  const originalText = buttonElement.innerHTML;
+  buttonElement.innerHTML = "Planning...";
+  buttonElement.disabled = true;
+
+  // 🎬 Add planning-glow to card
+  const card = buttonElement.closest(".card");
+  card.classList.add("planning-glow");
+
+  // 🎬 Default cinematic future date (30 days ahead)
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 30);
+
+  const travelDate = futureDate.toISOString().split("T")[0];
+
+  try {
+
+    const res = await fetch("http://127.0.0.1:8000/trips/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        destination: destination,
+        country: country || "",
+        travel_date: travelDate
+      })
+    });
+
+    if (!res.ok) throw new Error("Trip create failed");
+
+    // 🎬 Success: Show cinematic toast
+    showToast("🎬 Trip added to My Trips");
+
+    // 🎬 Redirect after 800ms
+    setTimeout(() => {
+      window.location.href = "trip.html";
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    
+    // Reset button on error
+    buttonElement.innerHTML = originalText;
+    buttonElement.disabled = false;
+    card.classList.remove("planning-glow");
+    
+    showToast("❌ Trip creation failed");
+  }
+}
+
+/* =========================
+   🎬 CINEMATIC TOAST
+========================= */
+
+function showToast(message) {
+  // Create toast element
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  // Trigger show animation
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 10);
+  
+  // Remove after 2.5 seconds
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 2500);
 }

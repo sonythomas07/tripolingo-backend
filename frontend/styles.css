@@ -77,6 +77,72 @@ color:#8bdcff;
   padding: 20px;
   border-radius: 12px;
   border: 1px solid #333;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+/* 🌴 Tropical Theme — Bali */
+.theme-tropical {
+  border: 1px solid #00ffcc;
+  box-shadow: 0 0 12px rgba(0,255,204,0.4);
+}
+
+/* ❄️ Ice Theme — Reykjavik */
+.theme-ice {
+  border: 1px solid #6ecbff;
+  box-shadow: 0 0 14px rgba(110,203,255,0.4);
+}
+
+/* 🌸 Sakura Theme — Kyoto */
+.theme-sakura {
+  border: 1px solid #ff7ab6;
+  box-shadow: 0 0 12px rgba(255,122,182,0.4);
+}
+
+/* ✨ Luxury Theme — Paris */
+.theme-luxury {
+  border: 1px solid gold;
+  box-shadow: 0 0 18px rgba(255,215,0,0.5);
+}
+
+/* =============================
+   🌌 AI AWARENESS GLOW
+============================= */
+
+.highlight-card {
+  border: 2px solid #00ffd0;
+  box-shadow: 0 0 20px rgba(0,255,208,0.6);
+}
+
+/* 🎬 AI Focus Pulse */
+.ai-focus {
+  animation: aiPulse 0.6s ease;
+}
+
+@keyframes aiPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 🌠 Background cinematic flash */
+.ai-background-flash {
+  animation: bgFlash 0.8s ease;
+}
+
+@keyframes bgFlash {
+  0% { background-color: #000; }
+  50% { background-color: #031f1c; }
+  100% { background-color: #000; }
 }
 
 /* ===============================
@@ -117,3 +183,42 @@ color:#8bdcff;
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+.countdown{
+  margin-top: 6px;
+  font-weight: bold;
+  color: #00ffd0;
+  transition: 0.3s ease;
+}
+
+.countdown.soon {
+  color: orange;
+  text-shadow: 0 0 8px orange;
+}
+
+.countdown.urgent {
+  color: #ff4d4d;
+  text-shadow: 0 0 12px #ff4d4d;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.plan-btn{
+  margin-top:12px;
+  padding:8px 14px;
+  background:#00ffd0;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.plan-btn:hover{
+  transform:scale(1.05);
+}
+
