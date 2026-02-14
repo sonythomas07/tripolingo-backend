@@ -290,3 +290,12 @@ async function completeTrip(tripId) {
     alert("Failed to mark trip as completed");
   }
 }
+
+/* =========================
+   🔐 LOGOUT
+========================= */
+
+function logoutUser() {
+  localStorage.removeItem("user_id");
+  window.location.href = "login.html";
+}

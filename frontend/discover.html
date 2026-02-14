@@ -7,14 +7,92 @@
 </head>
 <body>
 
+  <nav class="navbar">
+    <div class="nav-left">
+      ✈️ <span class="logo-text">Tripolingo</span>
+    </div>
+
+    <div class="nav-center">
+      <a href="discover.html">Discover</a>
+      <a href="trip.html">My Trips</a>
+      <a href="admin.html">Admin</a>
+    </div>
+
+    <div class="nav-right">
+      <button onclick="logoutUser()" class="logout-btn">
+        Logout
+      </button>
+    </div>
+  </nav>
+
   <header>
     <h1>Discover</h1>
     <p>Find destinations tailored to your travel style</p>
   </header>
 
+  <section class="discover-hero">
+
+    <div class="hero-badge">
+      ✨ AI-Powered Discovery
+    </div>
+
+    <h1 class="hero-title">
+      Find Your Next <span>Adventure</span>
+    </h1>
+
+    <p class="hero-sub">
+      Explore destinations tailored to your interests.
+      Search, filter, and discover places you'll love.
+    </p>
+
+    <div class="hero-search">
+      <input id="search-input" placeholder="Search destinations, activities, or experiences..." />
+      <button>Search</button>
+    </div>
+
+    <div class="filter-row">
+      <button id="filters-btn" class="filter-btn">Filters ▾</button>
+    </div>
+
+    <!-- 🎬 Filter Panel -->
+    <div id="filters-panel" class="filters-panel">
+      <div class="filter-group">
+        <h4>Budget</h4>
+        <div id="filter-budget">
+          <!-- Dynamic budget options -->
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <h4>Activities</h4>
+        <div id="filter-activities">
+          <!-- Dynamic activity options -->
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <h4>Region</h4>
+        <div id="filter-region">
+          <!-- Dynamic region options -->
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button id="clear-filters" class="clear-btn">Clear</button>
+        <button id="apply-filters" class="apply-btn">Apply Filters</button>
+      </div>
+    </div>
+
+  </section>
+
   <section id="destinations" class="destinations-grid"></section>
 
-  <!-- 💬 Chat icon -->
+  <!-- � Show More Pagination Button -->
+  <button id="show-more-btn" class="show-more-btn" style="display: none;">
+    Show More ✨
+  </button>
+
+  <!-- �💬 Chat icon -->
   <div id="chat-icon" title="Chat with Tripolingo AI">💬</div>
 
   <!-- ✅ ADD THIS AI CHAT BOX -->

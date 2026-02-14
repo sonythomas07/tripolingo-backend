@@ -1,57 +1,34 @@
 from fastapi import APIRouter, HTTPException
+from dotenv import load_dotenv
 from database import supabase
+
+load_dotenv()
 
 router = APIRouter()
 
-DESTINATIONS = [
-    {
-        "name": "Kyoto",
-        "country": "Japan",
-        "interests": ["History", "Culture", "Food"],
-        "travel_styles": ["Cultural", "Solo"],
-        "budget": "Moderate"
-    },
-    {
-        "name": "Bali",
-        "country": "Indonesia",
-        "interests": ["Nature", "Adventure", "Wellness"],
-        "travel_styles": ["Relaxed", "Adventure"],
-        "budget": "Budget"
-    },
-    {
-        "name": "Paris",
-        "country": "France",
-        "interests": ["Culture", "Food", "History"],
-        "travel_styles": ["Luxury", "Romantic"],
-        "budget": "Luxury"
-    },
-    {
-        "name": "Reykjavik",
-        "country": "Iceland",
-        "interests": ["Nature", "Adventure", "Photography"],
-        "travel_styles": ["Adventure"],
-        "budget": "Luxury"
-    }
-]
-
 def calculate_match_score(preferences, destination):
+    # Default score if preferences are missing or empty
+    if not preferences:
+        return 50
+    
     score = 0
 
-    # Interest match
-    for interest in preferences["interests"]:
-        if interest in destination["interests"]:
-            score += 25
-
     # Travel style match
-    for style in preferences["travel_styles"]:
-        if style in destination["travel_styles"]:
-            score += 20
+    pref_style = preferences.get("travel_style")
+    dest_style = destination.get("travel_style")
+    
+    if pref_style and dest_style and pref_style == dest_style:
+        score += 50
 
     # Budget match
-    if preferences["budget"] == destination["budget"]:
-        score += 15
+    pref_budget = preferences.get("budget")
+    dest_budget = destination.get("budget")
+    
+    if pref_budget and dest_budget and pref_budget == dest_budget:
+        score += 50
 
-    return min(score, 100)
+    # Return default score of 50 if no matches found
+    return score if score > 0 else 50
 
 @router.get("/recommendations/{user_id}")
 async def get_recommendations(user_id: str):
@@ -64,17 +41,32 @@ async def get_recommendations(user_id: str):
         raise HTTPException(status_code=404, detail="Preferences not found")
 
     preferences = result.data[0]
+    
+    # Fetch ALL active destinations from database
+    destinations_result = supabase.table("destinations") \
+        .select("*") \
+        .eq("active", True) \
+        .execute()
+    
+    if not destinations_result.data:
+        return []
+    
     recommendations = []
 
-    for destination in DESTINATIONS:
+    for destination in destinations_result.data:
         match = calculate_match_score(preferences, destination)
 
-        if match > 0:
-            recommendations.append({
-                "name": destination["name"],
-                "country": destination["country"],
-                "match": match
-            })
+        recommendations.append({
+            "id": destination["id"],
+            "name": destination["name"],
+            "country": destination["country"],
+            "travel_style": destination.get("travel_style"),
+            "budget": destination.get("budget"),
+            "description": destination.get("description"),
+            "tags": destination.get("tags"),
+            "season": destination.get("season"),
+            "match": match
+        })
 
     recommendations.sort(key=lambda x: x["match"], reverse=True)
 

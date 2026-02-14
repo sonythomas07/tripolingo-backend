@@ -1,5 +1,12 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+// 🔍 Store all destinations for live search
+let allDestinations = [];
+let fullDestinationsList = []; // 📄 Keep original full list for reset
+
+// 📄 Pagination support
+let visibleCount = 10;
+
 /* =========================
    LOAD DISCOVER PAGE
 ========================= */
@@ -77,7 +84,177 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("chat-icon").addEventListener("click", () => {
     document.getElementById("ai-chat-container").classList.toggle("show");
   });
+
+  // 🔍 Live search functionality
+  const searchInput = document.getElementById("search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", handleSearch);
+  }
+
+  // 🎬 Filters functionality
+  const filtersBtn = document.getElementById("filters-btn");
+  if (filtersBtn) {
+    filtersBtn.addEventListener("click", toggleFilters);
+  }
+
+  const applyFiltersBtn = document.getElementById("apply-filters");
+  if (applyFiltersBtn) {
+    applyFiltersBtn.addEventListener("click", applyFilters);
+  }
+
+  const clearFiltersBtn = document.getElementById("clear-filters");
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener("click", clearFilters);
+  }
+
+  // 📄 Show More button
+  const showMoreBtn = document.getElementById("show-more-btn");
+  if (showMoreBtn) {
+    showMoreBtn.addEventListener("click", () => {
+      visibleCount += 10;
+      renderVisibleDestinations();
+    });
+  }
 });
+
+/* =========================
+   🔍 SEARCH HANDLER
+========================= */
+
+function handleSearch(e) {
+  const query = e.target.value.toLowerCase().trim();
+
+  // Only search from fullDestinationsList (original Supabase data)
+  if (!fullDestinationsList || fullDestinationsList.length === 0) {
+    console.warn("No destinations loaded from API");
+    return;
+  }
+
+  // Reset pagination on new search
+  visibleCount = 10;
+
+  // Empty query = show all loaded destinations
+  if (query === "") {
+    allDestinations = fullDestinationsList;
+    renderVisibleDestinations();
+    return;
+  }
+
+  // Filter ONLY from fullDestinationsList (original Supabase API data)
+  const filtered = fullDestinationsList.filter(dest =>
+    (dest.name && dest.name.toLowerCase().includes(query)) ||
+    (dest.country && dest.country.toLowerCase().includes(query)) ||
+    (dest.travel_style && dest.travel_style.toLowerCase().includes(query))
+  );
+
+  console.log(`Search query: "${query}" | Results: ${filtered.length}`);
+  
+  // Update allDestinations with filtered results for pagination
+  allDestinations = filtered;
+  renderVisibleDestinations();
+}
+
+/* =========================
+   🎬 FILTER SYSTEM
+========================= */
+
+function buildDynamicFilters(destinations) {
+  if (!destinations || destinations.length === 0) return;
+
+  // Extract unique values from destinations
+  const styles = [...new Set(destinations.map(d => d.travel_style).filter(Boolean))];
+  const budgets = [...new Set(destinations.map(d => d.budget).filter(Boolean))];
+  const countries = [...new Set(destinations.map(d => d.country).filter(Boolean))];
+
+  // Populate Activities
+  const activitiesContainer = document.getElementById("filter-activities");
+  if (activitiesContainer) {
+    activitiesContainer.innerHTML = styles.map(style => `
+      <label>
+        <input type="radio" name="activity" value="${style}">
+        ${style}
+      </label>
+    `).join("");
+  }
+
+  // Populate Budget
+  const budgetContainer = document.getElementById("filter-budget");
+  if (budgetContainer) {
+    budgetContainer.innerHTML = budgets.map(budget => `
+      <label>
+        <input type="radio" name="budget" value="${budget}">
+        ${budget}
+      </label>
+    `).join("");
+  }
+
+  // Populate Region (countries)
+  const regionContainer = document.getElementById("filter-region");
+  if (regionContainer) {
+    regionContainer.innerHTML = countries.map(country => `
+      <label>
+        <input type="radio" name="region" value="${country}">
+        ${country}
+      </label>
+    `).join("");
+  }
+}
+
+function toggleFilters() {
+  const panel = document.getElementById("filters-panel");
+  if (panel) {
+    panel.classList.toggle("show");
+  }
+}
+
+function applyFilters() {
+  // Only filter from fullDestinationsList (original Supabase data)
+  if (!fullDestinationsList || fullDestinationsList.length === 0) {
+    console.warn("No destinations loaded from API");
+    return;
+  }
+
+  // Reset pagination on new filter
+  visibleCount = 10;
+
+  const selectedBudget = document.querySelector('input[name="budget"]:checked')?.value;
+  const selectedActivity = document.querySelector('input[name="activity"]:checked')?.value;
+  const selectedRegion = document.querySelector('input[name="region"]:checked')?.value;
+
+  let filtered = fullDestinationsList;
+
+  // Apply filters only if values are selected
+  filtered = filtered.filter(d => !selectedBudget || d.budget === selectedBudget);
+  filtered = filtered.filter(d => !selectedActivity || d.travel_style === selectedActivity);
+  filtered = filtered.filter(d => !selectedRegion || d.country === selectedRegion);
+
+  console.log(`Filters applied | Results: ${filtered.length}`);
+  
+  // Update allDestinations with filtered results for pagination
+  allDestinations = filtered;
+  renderVisibleDestinations();
+  toggleFilters();
+}
+
+function clearFilters() {
+  // Clear all radio buttons
+  document.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.checked = false;
+  });
+
+  // Reset pagination
+  visibleCount = 10;
+
+  // Restore full list
+  allDestinations = fullDestinationsList;
+
+  // Show all destinations from fullDestinationsList (original Supabase data)
+  if (allDestinations && allDestinations.length > 0) {
+    renderVisibleDestinations();
+  }
+
+  toggleFilters();
+}
 
 async function loadDiscover() {
   const userId = localStorage.getItem("user_id");
@@ -99,15 +276,40 @@ async function loadDiscover() {
 
     const recommendations = await response.json();
 
-    console.log("Recommendations:", recommendations);
+    console.log("✅ API Response received:", recommendations.length, "destinations");
+    console.log("Raw API data:", recommendations);
 
-    // ⭐ SAVE globally for AI highlight
-    window.currentRecommendations = recommendations;
+    // ✅ Remove duplicates using destination name
+    const unique = removeDuplicates(recommendations);
 
-    renderDestinations(recommendations);
+    console.log("✅ After deduplication:", unique.length, "unique destinations");
+    console.log("✅ Unique destination names:", unique.map(d => d.name).join(", "));
+
+    // 🔍 Store ONLY Supabase data (no demo/fallback data)
+    fullDestinationsList = unique; // 📄 Keep original full list
+    allDestinations = unique; // Current active list
+    
+    // ⭐ SAVE globally for AI highlight (same as allDestinations)
+    window.currentRecommendations = unique;
+
+    // 🎬 Build dynamic filters from loaded destinations
+    buildDynamicFilters(unique);
+
+    // Render visible destinations with pagination
+    renderVisibleDestinations();
 
   } catch (error) {
-    console.error("Fetch failed:", error);
+    console.error("❌ Failed to load destinations from API:", error);
+    // Clear all arrays to prevent showing stale/duplicate data
+    fullDestinationsList = [];
+    allDestinations = [];
+    window.currentRecommendations = [];
+    
+    // Clear the UI
+    const container = document.getElementById("destinations");
+    if (container) {
+      container.innerHTML = "<p>Failed to load destinations. Please refresh the page.</p>";
+    }
   }
 }
 
@@ -115,15 +317,46 @@ async function loadDiscover() {
    RENDER DESTINATIONS
 ========================= */
 
+function removeDuplicates(list) {
+  // Remove duplicates using destination name as unique identifier
+  return list.filter(
+    (item, index, self) =>
+      index === self.findIndex(d => d.name === item.name)
+  );
+}
+
+function renderVisibleDestinations(highlighted = []) {
+  // Get only the visible slice of destinations
+  const visible = allDestinations.slice(0, visibleCount);
+  
+  // Render the visible destinations
+  renderDestinations(visible, highlighted);
+
+  // Show/hide "Show More" button
+  const btn = document.getElementById("show-more-btn");
+  if (btn) {
+    if (visibleCount >= allDestinations.length) {
+      btn.style.display = "none";
+    } else {
+      btn.style.display = "block";
+    }
+  }
+}
+
 function renderDestinations(destinations, highlighted = []) {
 
   const container = document.getElementById("destinations");
+  
+  // ✅ ALWAYS clear container before rendering (prevent duplicates)
   container.innerHTML = "";
 
+  // Only show message if NO destinations from API
   if (!destinations || destinations.length === 0) {
-    container.innerHTML = "<p>No destinations match your preferences yet.</p>";
+    container.innerHTML = "<p>No destinations available. Please check your preferences or contact support.</p>";
     return;
   }
+
+  console.log("🎨 Rendering", destinations.length, "destination(s):", destinations.map(d => d.name).join(", "));
 
   destinations.forEach(dest => {
 
@@ -162,13 +395,48 @@ function renderDestinations(destinations, highlighted = []) {
     }
 
     card.innerHTML = `
-      <h3>${dest.name}, ${dest.country}</h3>
-      <p>Match Score: ${dest.match}%</p>
+      <div class="card-image" style="background-image: url('https://picsum.photos/400/250?random=${Math.random()}');"></div>
 
-      <button class="plan-btn" id="plan-btn-${dest.name.replace(/\s+/g, '-')}"
-        onclick="planTrip('${dest.name}','${dest.country}', this)">
-        Plan Trip ✈️
-      </button>
+      <div class="card-body">
+
+        <div class="card-header">
+          <span class="badge">${dest.travel_style || "Travel"}</span>
+          <span class="match">${dest.match}% Match</span>
+        </div>
+
+        <h3 class="title">${dest.name}</h3>
+        <p class="country">📍 ${dest.country || ""}</p>
+
+        <p class="desc">
+          ${dest.description || ""}
+        </p>
+
+        <div class="tag-row">
+          ${(dest.tags && Array.isArray(dest.tags) && dest.tags.length > 0)
+            ? dest.tags.map(t=>`<span class="tag">${t}</span>`).join("")
+            : ""}
+        </div>
+
+        <div class="action-row">
+          <span class="pill">Visit Highlights</span>
+          <span class="pill">Explore Local Spots</span>
+          <span class="pill">+2</span>
+        </div>
+
+        <div class="meta">
+          <span>💰 ${dest.budget || ""}</span>
+          <span>📅 ${dest.season || ""}</span>
+        </div>
+
+        <div class="card-actions">
+          <button class="save-btn">Save</button>
+          <button class="plan-btn" id="plan-btn-${dest.name.replace(/\s+/g, '-')}"
+            onclick="planTrip('${dest.name}','${dest.country}', this)">
+            Plan Trip ✈️
+          </button>
+        </div>
+
+      </div>
     `;
 
     container.appendChild(card);
@@ -226,10 +494,7 @@ async function sendMessage() {
 
     // ⭐ Highlight only if exists
     if (data.suggested_destinations?.length && window.currentRecommendations) {
-      renderDestinations(
-        window.currentRecommendations,
-        data.suggested_destinations
-      );
+      renderVisibleDestinations(data.suggested_destinations);
 
       scrollToSuggested(data.suggested_destinations);
     }
@@ -364,4 +629,13 @@ function showToast(message) {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 400);
   }, 2500);
+}
+
+/* =========================
+   🔐 LOGOUT
+========================= */
+
+function logoutUser() {
+  localStorage.removeItem("user_id");
+  window.location.href = "login.html";
 }

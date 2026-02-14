@@ -5,6 +5,7 @@ from preferences import router as preferences_router
 from recommendations import router as recommendations_router
 from ai_chat import router as ai_router
 from trips import router as trips_router
+from admin import router as admin_router
 
 
 
@@ -37,6 +38,8 @@ app.include_router(
 app.include_router(ai_router, tags=["AI Assistant"])
 
 app.include_router(trips_router, tags=["Trips"])
+
+app.include_router(admin_router, tags=["Admin"])
 
 @app.get("/")
 async def root():
