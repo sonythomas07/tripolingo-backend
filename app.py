@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from auth import router as auth_router
-from preferences import router as preferences_router
 from recommendations import router as recommendations_router
 from ai_chat import router as ai_router
 from trips import router as trips_router
@@ -22,13 +21,6 @@ app.add_middleware(
 
 # Include authentication router
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-
-# Include preferences router
-app.include_router(
-    preferences_router,
-    prefix="/user",
-    tags=["User Preferences"]
-)
 
 app.include_router(
     recommendations_router,

@@ -1,10 +1,79 @@
-<form onsubmit="signup(event)">
-  <input type="text" id="display_name" placeholder="Your name" required />
-  <input type="text" id="username" placeholder="Username" required />
-  <input type="email" id="email" placeholder="Email" required />
-  <input type="password" id="password" placeholder="Password" required />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tripolingo – Sign Up</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
 
-  <button type="submit">Create Account</button>
-</form>
+  <div class="auth-container">
+    <div class="auth-card">
+      
+      <div class="auth-logo">
+        <div class="auth-logo-text">✈️ Tripolingo</div>
+      </div>
 
-<script src="auth.js"></script>
+      <div class="auth-welcome">
+        <h2>Create Account</h2>
+        <p>Start your travel journey today</p>
+      </div>
+
+      <form onsubmit="signup(event)" class="auth-form">
+        
+        <div class="auth-input-group">
+          <input 
+            type="text" 
+            id="display_name" 
+            class="auth-input"
+            placeholder="Your Name" 
+            required 
+          />
+        </div>
+
+        <div class="auth-input-group">
+          <input 
+            type="text" 
+            id="username" 
+            class="auth-input"
+            placeholder="Username" 
+            required 
+          />
+        </div>
+
+        <div class="auth-input-group">
+          <input 
+            type="email" 
+            id="email" 
+            class="auth-input"
+            placeholder="Email" 
+            required 
+          />
+        </div>
+
+        <div class="auth-input-group">
+          <input 
+            type="password" 
+            id="password" 
+            class="auth-input"
+            placeholder="Password" 
+            required 
+          />
+        </div>
+
+        <button type="submit" class="auth-submit-btn">Create Account</button>
+
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="login.html">Sign in</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+
+</body>
+</html>

@@ -56,23 +56,30 @@
 
     <!-- 🎬 Filter Panel -->
     <div id="filters-panel" class="filters-panel">
-      <div class="filter-group">
+      <div class="filter-group filter-budget-group">
         <h4>Budget</h4>
-        <div id="filter-budget">
-          <!-- Dynamic budget options -->
+        <div class="budget-slider-container">
+          <input type="range" id="budget-slider" min="1" max="4" value="2" />
+          <div class="budget-labels">
+            <span>$0 - $500</span>
+            <span>$500 - $1500</span>
+            <span>$1500 - $3000</span>
+            <span>$3000+</span>
+          </div>
+          <div id="budget-value" class="budget-value">$500 - $1500</div>
         </div>
       </div>
 
-      <div class="filter-group">
+      <div class="filter-group filter-scrollable">
         <h4>Activities</h4>
-        <div id="filter-activities">
+        <div id="filter-activities" class="filter-scroll-list">
           <!-- Dynamic activity options -->
         </div>
       </div>
 
-      <div class="filter-group">
+      <div class="filter-group filter-scrollable">
         <h4>Region</h4>
-        <div id="filter-region">
+        <div id="filter-region" class="filter-scroll-list">
           <!-- Dynamic region options -->
         </div>
       </div>
@@ -103,6 +110,59 @@
 
     <input id="chat-input" placeholder="Ask about travel..." />
     <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- 🎬 Trip Detail Overlay -->
+  <div id="trip-detail-overlay" class="trip-overlay hidden">
+    <div class="trip-overlay-content">
+
+      <button id="close-overlay" class="close-overlay">✕</button>
+
+      <div id="trip-hero"></div>
+
+      <div class="trip-info">
+          <h2 id="trip-title"></h2>
+
+          <div class="trip-datetime">
+              <label>Travel Date</label>
+              <input type="date" id="trip-date"/>
+
+              <label>Travel Time</label>
+              <input type="time" id="trip-time"/>
+          </div>
+
+          <h3>Things To Do</h3>
+          <div id="trip-todo-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 🎬 Fullscreen Planner Overlay -->
+  <div id="planner-overlay" class="planner-overlay hidden">
+    <div class="planner-card">
+      <button id="close-planner" class="close-overlay">✕</button>
+      
+      <h2 id="planner-title">Plan Your Trip</h2>
+      
+      <div class="date-row">
+        <div class="date-input-group">
+          <label>Start Date</label>
+          <input type="date" id="startDate" />
+        </div>
+        <div class="date-input-group">
+          <label>End Date</label>
+          <input type="date" id="endDate" />
+        </div>
+      </div>
+      
+      <h3>Things To Do</h3>
+      <div id="todoContainer"></div>
+      
+      <button id="addTodoBtn" class="add-todo-btn">+ Add Task</button>
+      
+      <button id="confirmTripBtn" class="confirm-trip-btn">Add Trip</button>
+    </div>
   </div>
 
   <script src="discover.js"></script>

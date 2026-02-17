@@ -12,10 +12,3 @@ class SignUpSchema(BaseModel):
 class SignInSchema(BaseModel):
     username: str
     password: str
-
-
-class UserPreferencesSchema(BaseModel):
-    travel_styles: List[str]
-    budget: str
-    interests: List[str]
-    travel_frequency: str

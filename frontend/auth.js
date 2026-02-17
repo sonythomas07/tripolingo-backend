@@ -31,7 +31,7 @@ async function signup(event) {
     }
 
     alert("Signup successful! Please login.");
-    window.location.href = "login.html";
+    window.location.href = "discover.html";
 
   } catch (error) {
     console.error(error);
@@ -71,9 +71,7 @@ async function login(event) {
     localStorage.setItem("username", data.user.username);
 
     alert("Login successful!");
-    // next page later: onboarding / dashboard
-    // for now just log
-    console.log("Logged in user:", data.user);
+    window.location.href = "discover.html";
 
   } catch (error) {
     console.error(error);

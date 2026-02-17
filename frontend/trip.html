@@ -29,9 +29,42 @@
 <header>
   <h1>My Trips</h1>
   <p>Your planned cinematic journeys</p>
+  
+  <!-- 🎬 Dashboard Controls -->
+  <div class="dashboard-controls">
+    <div class="filter-controls">
+      <select id="status-filter" class="status-filter">
+        <option value="all">All Trips</option>
+        <option value="wishlist">Wishlist</option>
+        <option value="planning">Planning</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    
+    <div class="view-toggle">
+      <button id="grid-btn" class="toggle-btn active">📊 Grid</button>
+      <button id="calendar-btn" class="toggle-btn">📅 Calendar</button>
+    </div>
+  </div>
 </header>
 
-<section id="trip-container" class="destinations-grid"></section>
+<!-- 🎬 Grid View with Status Sections -->
+<div id="trip-sections">
+  <section id="wishlist-section" class="trip-section"></section>
+  <section id="planning-section" class="trip-section"></section>
+  <section id="upcoming-section" class="trip-section"></section>
+  <section id="ongoing-section" class="trip-section"></section>
+  <section id="completed-section" class="trip-section"></section>
+  <section id="cancelled-section" class="trip-section"></section>
+</div>
+
+<!-- 🎬 Calendar View -->
+<div id="calendar-view" style="display:none;">
+  <div id="calendar-grid" class="calendar-grid"></div>
+</div>
 
 <script src="trip.js"></script>
 
