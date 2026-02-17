@@ -16,7 +16,6 @@
   <div class="nav-center">
     <a href="discover.html">Discover</a>
     <a href="trip.html">My Trips</a>
-    <a href="admin.html">Admin</a>
   </div>
 
   <div class="nav-right">
@@ -39,8 +38,6 @@
         <option value="planning">Planning</option>
         <option value="upcoming">Upcoming</option>
         <option value="ongoing">Ongoing</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
       </select>
     </div>
     
@@ -57,13 +54,38 @@
   <section id="planning-section" class="trip-section"></section>
   <section id="upcoming-section" class="trip-section"></section>
   <section id="ongoing-section" class="trip-section"></section>
-  <section id="completed-section" class="trip-section"></section>
-  <section id="cancelled-section" class="trip-section"></section>
 </div>
 
 <!-- 🎬 Calendar View -->
 <div id="calendar-view" style="display:none;">
   <div id="calendar-grid" class="calendar-grid"></div>
+</div>
+
+<!-- 🎬 Fullscreen Planner Overlay -->
+<div id="planner-overlay" class="planner-overlay hidden">
+  <div class="planner-card">
+    <button id="close-planner" class="close-overlay">✕</button>
+    
+    <h2 id="planner-title">Plan Your Trip</h2>
+    
+    <div class="date-row">
+      <div class="date-input-group">
+        <label>Start Date</label>
+        <input type="date" id="startDate" />
+      </div>
+      <div class="date-input-group">
+        <label>End Date</label>
+        <input type="date" id="endDate" />
+      </div>
+    </div>
+    
+    <h3>Things To Do</h3>
+    <div id="todoContainer"></div>
+    
+    <button id="addTodoBtn" class="add-todo-btn">+ Add Task</button>
+    
+    <button id="confirmTripBtn" class="confirm-trip-btn">Update Trip</button>
+  </div>
 </div>
 
 <script src="trip.js"></script>

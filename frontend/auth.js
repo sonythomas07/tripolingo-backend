@@ -30,6 +30,17 @@ async function signup(event) {
       return;
     }
 
+    // Store user info if provided in signup response
+    if (data.user) {
+      localStorage.setItem("user_id", data.user.id);
+      localStorage.setItem("username", data.user.username);
+    }
+    
+    // Store access token if provided
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+    }
+
     alert("Signup successful! Please login.");
     window.location.href = "discover.html";
 
@@ -69,6 +80,11 @@ async function login(event) {
     // Store user info for later use
     localStorage.setItem("user_id", data.user.id);
     localStorage.setItem("username", data.user.username);
+    
+    // Store access token if provided
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+    }
 
     alert("Login successful!");
     window.location.href = "discover.html";

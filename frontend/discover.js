@@ -365,9 +365,18 @@ function clearFilters() {
 async function loadDiscover() {
   const userId = localStorage.getItem("user_id");
 
+  // Allow access without login (for localStorage-based trips)
   if (!userId) {
-    alert("Please login again");
-    window.location.href = "login.html";
+    console.log("⚠️ No user logged in - showing limited features");
+    // Load some default destinations or show empty state
+    fullDestinationsList = [];
+    allDestinations = [];
+    window.currentRecommendations = [];
+    
+    const container = document.getElementById("destinations");
+    if (container) {
+      container.innerHTML = "<p style='text-align:center; color:#94a3b8; padding:40px;'>Please <a href='login.html' style='color:#667eea;'>login</a> to see personalized recommendations.</p>";
+    }
     return;
   }
 
@@ -743,53 +752,31 @@ function confirmPlannedTrip() {
   savePlannedTrip(currentPlannerDestination, startDate, endDate, todos);
 }
 
-async function savePlannedTrip(destination, startDate, endDate, todos) {
-  const accessToken = localStorage.getItem("access_token");
+function savePlannedTrip(destination, startDate, endDate, todos) {
+  // Save to localStorage
+  const plannedTrips = JSON.parse(localStorage.getItem("plannedTrips") || "[]");
   
-  if (!accessToken) {
-    showToast("⚠️ Login required");
-    return;
-  }
+  const newTrip = {
+    destination: destination.name,
+    country: destination.country || "",
+    startDate: startDate,
+    endDate: endDate,
+    todos: todos,
+    status: "Planning",
+    description: destination.description || "",
+    activities: destination.activities || [],
+    budget: destination.budget || "",
+    image: destination.image || `https://picsum.photos/400/250?random=${Math.random()}`
+  };
   
-  if (!destination.id) {
-    showToast("❌ Invalid destination");
-    return;
-  }
+  plannedTrips.push(newTrip);
+  localStorage.setItem("plannedTrips", JSON.stringify(plannedTrips));
   
-  try {
-    const res = await fetch("http://127.0.0.1:8000/trips", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        destination_id: destination.id,
-        status: "planning",
-        trip_date: startDate,
-        activities: todos
-      })
-    });
-    
-    if (res.ok) {
-      showToast("✅ Trip planned successfully!");
-      
-      // Close planner
-      document.getElementById("planner-overlay").classList.add("hidden");
-      
-      // Optional: redirect to My Trips page
-      setTimeout(() => {
-        window.location.href = "trip.html";
-      }, 1500);
-    } else {
-      const errorText = await res.text();
-      console.log("Error response:", errorText);
-      showToast("❌ Failed to plan trip");
-    }
-  } catch (err) {
-    console.error("Plan trip error:", err);
-    showToast("❌ Trip planning failed");
-  }
+  // Close planner
+  document.getElementById("planner-overlay").classList.add("hidden");
+  
+  // Show success toast
+  showToast("✅ Trip added successfully");
 }
 
 /* =========================
@@ -846,61 +833,47 @@ function openTripDetail(destinationName) {
    🎬 SAVE TRIP (NEW)
 ========================= */
 
-async function saveTrip(destination) {
-
-  const accessToken = localStorage.getItem("access_token");
-
-  if (!accessToken) {
-    showToast("⚠️ Login required");
+function saveTrip(destination) {
+  // Save to localStorage wishlist
+  const wishlistTrips = JSON.parse(localStorage.getItem("wishlistTrips") || "[]");
+  
+  // Check if already saved
+  const alreadySaved = wishlistTrips.some(trip => trip.destination === destination.name);
+  
+  if (alreadySaved) {
+    showToast("⚠️ Already in wishlist");
     return;
   }
-
-  // Validate destination_id
-  if (!destination.id) {
-    showToast("❌ Invalid destination");
-    return;
-  }
-
-  try {
-
-    const res = await fetch("http://127.0.0.1:8000/trips", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        destination_id: destination.id,
-        status: "planning"
-      })
-    });
-
-    if (res.ok) {
-      // Success: Show toast and update UI instantly (no reload)
-      showToast("✅ Trip Saved");
-      
-      // Optional: Update the save button to show "Saved" state
-      const saveButtons = document.querySelectorAll('.action-save');
-      saveButtons.forEach(btn => {
-        const btnDestId = btn.getAttribute('data-dest-id');
-        if (btnDestId === destination.id) {
-          btn.textContent = "Saved";
-          btn.disabled = true;
-          btn.style.opacity = "0.6";
-        }
-      });
-
-    } else {
-      // Log full response text for debugging
-      const errorText = await res.text();
-      console.log("Error response:", errorText);
-      showToast("❌ Trip save failed");
+  
+  const newTrip = {
+    destination: destination.name,
+    country: destination.country || "",
+    status: "Wishlist",
+    description: destination.description || "",
+    activities: destination.activities || [],
+    budget: destination.budget || "",
+    image: destination.image || `https://picsum.photos/400/250?random=${Math.random()}`
+  };
+  
+  wishlistTrips.push(newTrip);
+  localStorage.setItem("wishlistTrips", JSON.stringify(wishlistTrips));
+  
+  showToast("✅ Added to Wishlist");
+  
+  // Update the save button to show "Saved" state
+  const saveButtons = document.querySelectorAll('.save-btn');
+  saveButtons.forEach(btn => {
+    const btnText = btn.textContent.trim();
+    if (btnText === "Save") {
+      const card = btn.closest('.card');
+      const cardTitle = card.querySelector('.card-title');
+      if (cardTitle && cardTitle.textContent === destination.name) {
+        btn.textContent = "Saved";
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+      }
     }
-
-  } catch (err) {
-    console.error("Save trip error:", err);
-    showToast("❌ Trip save failed");
-  }
+  });
 }
 
 
@@ -908,21 +881,7 @@ async function saveTrip(destination) {
    🎬 PLAN TRIP (CINEMATIC)
 ========================= */
 
-async function planTrip(destination, buttonElement) {
-
-  const userId = localStorage.getItem("user_id");
-
-  if (!userId) {
-    showToast("⚠️ Login required");
-    return;
-  }
-
-  // Validate destination
-  if (!destination.id) {
-    showToast("❌ Invalid destination");
-    return;
-  }
-
+function planTrip(destination, buttonElement) {
   // 🎬 Disable button and change text
   const originalText = buttonElement.innerHTML;
   buttonElement.innerHTML = "Saving...";
@@ -934,7 +893,7 @@ async function planTrip(destination, buttonElement) {
 
   // Call saveTrip function
   try {
-    await saveTrip(destination);
+    saveTrip(destination);
   } catch (err) {
     // Reset button on error
     buttonElement.innerHTML = originalText;
@@ -960,11 +919,11 @@ function showToast(message) {
     toast.classList.add("show");
   }, 10);
   
-  // Remove after 2.5 seconds
+  // Remove after 3 seconds
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 400);
-  }, 2500);
+  }, 3000);
 }
 
 /* =========================
