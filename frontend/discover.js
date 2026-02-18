@@ -235,6 +235,69 @@ function toggleFilters() {
   }
 }
 
+/* =========================
+   🎯 LOAD USER PREFERENCES
+========================= */
+
+function loadUserPreferences() {
+  const prefsStr = localStorage.getItem("userPreferences");
+  
+  if (!prefsStr) {
+    console.log("No user preferences found - showing all destinations");
+    return;
+  }
+  
+  try {
+    const prefs = JSON.parse(prefsStr);
+    console.log("📌 Loading saved user preferences:", prefs);
+    
+    let hasPreferences = false;
+    
+    // 1️⃣ Set budget slider
+    if (prefs.budget) {
+      const budgetSlider = document.getElementById("budget-slider");
+      if (budgetSlider) {
+        budgetSlider.value = prefs.budget;
+        updateBudgetDisplay();
+        hasPreferences = true;
+      }
+    }
+    
+    // 2️⃣ Pre-select activity checkboxes
+    if (prefs.activities && prefs.activities.length > 0) {
+      prefs.activities.forEach(activity => {
+        const checkbox = document.querySelector(`input[name="activity"][value="${activity}"]`);
+        if (checkbox) {
+          checkbox.checked = true;
+          hasPreferences = true;
+        }
+      });
+    }
+    
+    // 3️⃣ Pre-select region checkboxes
+    if (prefs.regions && prefs.regions.length > 0) {
+      prefs.regions.forEach(region => {
+        const checkbox = document.querySelector(`input[name="region"][value="${region}"]`);
+        if (checkbox) {
+          checkbox.checked = true;
+          hasPreferences = true;
+        }
+      });
+    }
+    
+    // 4️⃣ Auto-apply filters if preferences exist
+    if (hasPreferences) {
+      console.log("✨ Auto-applying user preferences");
+      setTimeout(() => {
+        applyFilters(false); // false = don't toggle filter panel
+      }, 100); // Small delay to ensure DOM is ready
+    }
+    
+  } catch (error) {
+    console.error("Error loading user preferences:", error);
+  }
+}
+
 function mapBudgetRange(value) {
   if (value <= 500) return "low";
   if (value <= 1500) return "moderate";
@@ -252,7 +315,7 @@ function updateBudgetDisplay() {
   display.textContent = budgetRanges[slider.value];
 }
 
-function applyFilters() {
+function applyFilters(shouldTogglePanel = true) {
   // Only filter from fullDestinationsList (original Supabase data)
   if (!fullDestinationsList || fullDestinationsList.length === 0) {
     console.warn("No destinations loaded from API");
@@ -300,7 +363,12 @@ function applyFilters() {
   if (!anyFilterActive) {
     allDestinations = fullDestinationsList;
     renderVisibleDestinations();
-    toggleFilters();
+    // Clear preferences if no filters active
+    localStorage.removeItem("userPreferences");
+    console.log("No filters active - cleared preferences");
+    if (shouldTogglePanel) {
+      toggleFilters();
+    }
     return;
   }
 
@@ -338,7 +406,24 @@ function applyFilters() {
   // Update allDestinations with sorted results (all destinations kept)
   allDestinations = destinationsWithScore;
   renderVisibleDestinations();
-  toggleFilters();
+  
+  // 💾 Save user preferences to localStorage for Profile page and future visits
+  saveUserPreferences(budgetSlider ? budgetSlider.value : "2", selectedActivities, selectedRegions);
+  
+  // Only toggle filter panel if called from user action (not auto-load)
+  if (shouldTogglePanel) {
+    toggleFilters();
+  }
+}
+
+function saveUserPreferences(budget, activities, regions) {
+  const prefs = {
+    budget: budget,
+    activities: activities,
+    regions: regions
+  };
+  localStorage.setItem("userPreferences", JSON.stringify(prefs));
+  console.log("💾 Saved user preferences:", prefs);
 }
 
 function clearFilters() {
@@ -364,6 +449,10 @@ function clearFilters() {
   if (allDestinations && allDestinations.length > 0) {
     renderVisibleDestinations();
   }
+
+  // 🗑️ Clear saved user preferences
+  localStorage.removeItem("userPreferences");
+  console.log("🗑️ Cleared user preferences");
 
   toggleFilters();
 }
@@ -408,6 +497,9 @@ async function loadDiscover() {
 
     // 🎬 Build dynamic filters from loaded destinations
     buildDynamicFilters(destinations);
+
+    // 🎯 Load and apply user preferences from Profile page
+    loadUserPreferences();
 
     // Render visible destinations with pagination
     renderVisibleDestinations();
