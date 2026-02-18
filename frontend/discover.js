@@ -199,6 +199,12 @@ function buildDynamicFilters(destinations) {
   const styles = [...new Set(destinations.map(d => d.travel_style).filter(Boolean))];
   const countries = [...new Set(destinations.map(d => d.country).filter(Boolean))];
 
+  // 💾 Save filter options to localStorage for profile page
+  localStorage.setItem("filterOptions", JSON.stringify({
+    activities: styles,
+    regions: countries
+  }));
+
   // Populate Activities (scrollable checkboxes)
   const activitiesContainer = document.getElementById("filter-activities");
   if (activitiesContainer) {

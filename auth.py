@@ -108,3 +108,42 @@ async def signin(credentials: SignInSchema):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sign in failed: {str(e)}"
         )
+
+
+@router.get("/user/{user_id}")
+async def get_user_profile(user_id: int):
+    """
+    Get user profile information by user ID.
+    """
+    try:
+        result = supabase.table("users") \
+            .select("id, username, email, display_name, created_at, preferred_budget, preferred_activities, preferred_regions") \
+            .eq("id", user_id) \
+            .execute()
+
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        user = result.data[0]
+        
+        return {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "display_name": user["display_name"],
+            "created_at": user.get("created_at"),
+            "preferred_budget": user.get("preferred_budget"),
+            "preferred_activities": user.get("preferred_activities", []),
+            "preferred_regions": user.get("preferred_regions", [])
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch user profile: {str(e)}"
+        )

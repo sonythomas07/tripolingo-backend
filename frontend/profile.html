@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tripolingo – My Profile</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    ✈️ <span class="logo-text">Tripolingo</span>
+  </div>
+
+  <div class="nav-center">
+    <a href="discover.html">Discover</a>
+    <a href="trip.html">My Trips</a>
+    <a href="profile.html">Profile</a>
+  </div>
+
+  <div class="nav-right">
+    <button onclick="logoutUser()" class="logout-btn">
+      Logout
+    </button>
+  </div>
+</nav>
+
+<header>
+  <h1>My Profile</h1>
+  <p>Manage your account and travel preferences</p>
+</header>
+
+<div style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+
+  <!-- Profile Card -->
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profile-avatar">
+        <span id="avatar-text"></span>
+      </div>
+      <div class="profile-info-main">
+        <h2 id="profile-display-name">Loading...</h2>
+        <p class="profile-username">@<span id="profile-username">...</span></p>
+        <p class="profile-email" id="profile-email">...</p>
+        <p class="profile-joined">
+          Member since <span id="profile-joined">...</span>
+        </p>
+      </div>
+      <button class="edit-profile-btn" onclick="editProfile()">
+        ✏️ Edit Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Preferences Section -->
+  <div class="preferences-section">
+    <h3 class="section-title">🎯 Travel Preferences</h3>
+    
+    <div class="preferences-grid">
+      
+      <!-- Budget Preference -->
+      <div class="preference-card clickable" onclick="openBudgetModal()">
+        <div class="pref-icon">💰</div>
+        <h4>Preferred Budget</h4>
+        <p class="pref-value" id="pref-budget">Not set</p>
+        <span class="edit-indicator">✏️ Click to edit</span>
+      </div>
+
+      <!-- Activities Preference -->
+      <div class="preference-card clickable" onclick="openActivitiesModal()">
+        <div class="pref-icon">🎨</div>
+        <h4>Favorite Activities</h4>
+        <div class="pref-tags" id="pref-activities">
+          <span class="pref-tag-empty">No activities selected</span>
+        </div>
+        <span class="edit-indicator">✏️ Click to edit</span>
+      </div>
+
+      <!-- Regions Preference -->
+      <div class="preference-card clickable" onclick="openRegionsModal()">
+        <div class="pref-icon">🌍</div>
+        <h4>Preferred Regions</h4>
+        <div class="pref-tags" id="pref-regions">
+          <span class="pref-tag-empty">No regions selected</span>
+        </div>
+        <span class="edit-indicator">✏️ Click to edit</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Budget Modal -->
+<div id="budget-modal" class="pref-modal hidden">
+  <div class="pref-modal-content">
+    <button class="modal-close" onclick="closeBudgetModal()">✕</button>
+    <h3>Select Your Budget</h3>
+    
+    <div class="budget-slider-container">
+      <input type="range" id="pref-budget-slider" min="1" max="4" value="2" />
+      <div class="budget-labels">
+        <span>$0 - $500</span>
+        <span>$500 - $1500</span>
+        <span>$1500 - $3000</span>
+        <span>$3000+</span>
+      </div>
+      <div id="pref-budget-value" class="budget-value">$500 - $1500</div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="modal-btn cancel-btn" onclick="closeBudgetModal()">Cancel</button>
+      <button class="modal-btn save-btn" onclick="saveBudgetPreference()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activities Modal -->
+<div id="activities-modal" class="pref-modal hidden">
+  <div class="pref-modal-content">
+    <button class="modal-close" onclick="closeActivitiesModal()">✕</button>
+    <h3>Select Your Favorite Activities</h3>
+    
+    <div class="filter-scroll-list" id="pref-activities-list">
+      <!-- Dynamically populated -->
+    </div>
+    
+    <div class="modal-actions">
+      <button class="modal-btn cancel-btn" onclick="closeActivitiesModal()">Cancel</button>
+      <button class="modal-btn save-btn" onclick="saveActivitiesPreference()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Regions Modal -->
+<div id="regions-modal" class="pref-modal hidden">
+  <div class="pref-modal-content">
+    <button class="modal-close" onclick="closeRegionsModal()">✕</button>
+    <h3>Select Your Preferred Regions</h3>
+    
+    <div class="filter-scroll-list" id="pref-regions-list">
+      <!-- Dynamically populated -->
+    </div>
+    
+    <div class="modal-actions">
+      <button class="modal-btn cancel-btn" onclick="closeRegionsModal()">Cancel</button>
+      <button class="modal-btn save-btn" onclick="saveRegionsPreference()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="profile.js"></script>
+
+<!-- Logout function -->
+<script>
+  function logoutUser() {
+    localStorage.clear();
+    alert("You have been logged out.");
+    window.location.href = "login.html";
+  }
+
+  function editProfile() {
+    alert("Edit Profile feature coming soon!");
+  }
+</script>
+
+</body>
+</html>
