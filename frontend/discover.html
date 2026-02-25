@@ -99,17 +99,65 @@
     Show More ✨
   </button>
 
-  <!-- �💬 Chat icon -->
+  <!-- 💬 Chat icon -->
   <div id="chat-icon" title="Chat with Tripolingo AI">💬</div>
 
-  <!-- ✅ ADD THIS AI CHAT BOX -->
-  <div id="ai-chat-container" class="ai-chat">
-    <h3>Tripolingo AI</h3>
+  <!-- 🤖 AI Assistant Modal -->
+  <div id="aiModal" class="ai-modal hidden">
+    <div class="ai-modal-overlay"></div>
+    <div class="ai-modal-container">
+      
+      <!-- Header -->
+      <div class="ai-header">
+        <div class="ai-header-left">
+          <div class="ai-icon-sparkle">✨</div>
+          <div class="ai-header-text">
+            <h3>Tripolingo AI</h3>
+            <p>Your travel assistant</p>
+          </div>
+        </div>
+        <button id="closeAIModal" class="ai-close-btn">✕</button>
+      </div>
 
-    <div id="chat-messages"></div>
+      <!-- Body -->
+      <div class="ai-body">
+        <!-- Welcome State -->
+        <div id="ai-welcome" class="ai-welcome">
+          <div class="ai-icon-large">🤖</div>
+          <h2>Welcome to Tripolingo AI!</h2>
+          <p class="ai-welcome-subtitle">Ask me anything about travel destinations, tips, or get personalized recommendations for your next adventure.</p>
+          
+          <div class="ai-suggestions-section">
+            <p class="ai-try-asking">Try asking:</p>
+            <div class="ai-suggestions">
+              <button class="ai-suggestion-btn" onclick="sendSuggestionToChat('What\'s the best time to visit Japan?')">
+                🗾 What's the best time to visit Japan?
+              </button>
+              <button class="ai-suggestion-btn" onclick="sendSuggestionToChat('Give me a 3-day Paris itinerary')">
+                🗼 Give me a 3-day Paris itinerary
+              </button>
+            </div>
+          </div>
+        </div>
 
-    <input id="chat-input" placeholder="Ask about travel..." />
-    <button onclick="sendMessage()">Send</button>
+        <!-- Chat Messages (hidden initially) -->
+        <div id="chat-messages" class="ai-messages" style="display: none;"></div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="ai-input-bar">
+        <input 
+          id="chat-input" 
+          type="text" 
+          placeholder="Ask about destinations, tips..." 
+          class="ai-input"
+        />
+        <button onclick="sendMessage()" class="ai-send-btn">
+          ✈️
+        </button>
+      </div>
+
+    </div>
   </div>
 
   <!-- 🎬 Trip Detail Overlay -->

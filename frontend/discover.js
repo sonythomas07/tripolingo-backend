@@ -81,9 +81,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadDiscover();
 
+  // 🤖 AI Modal Controls
   document.getElementById("chat-icon").addEventListener("click", () => {
-    document.getElementById("ai-chat-container").classList.toggle("show");
+    document.getElementById("aiModal").classList.toggle("hidden");
   });
+
+  // Close modal button
+  const closeModalBtn = document.getElementById("closeAIModal");
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", () => {
+      document.getElementById("aiModal").classList.add("hidden");
+    });
+  }
+
+  // Close modal when clicking overlay
+  document.getElementById("aiModal").addEventListener("click", (e) => {
+    if (e.target.classList.contains("ai-modal-overlay")) {
+      document.getElementById("aiModal").classList.add("hidden");
+    }
+  });
+
+  // Enter key to send message
+  const chatInput = document.getElementById("chat-input");
+  if (chatInput) {
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
 
   // 🔍 Live search functionality
   const searchInput = document.getElementById("search-input");
@@ -148,6 +175,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmTripBtn = document.getElementById("confirmTripBtn");
   if (confirmTripBtn) {
     confirmTripBtn.addEventListener("click", confirmPlannedTrip);
+  }
+
+  // 🎯 EVENT DELEGATION - Plan Trip & Save buttons
+  const destinationsContainer = document.getElementById("destinations");
+  if (destinationsContainer) {
+    destinationsContainer.addEventListener("click", (e) => {
+      
+      const planBtn = e.target.closest(".plan-trip-btn");
+      const saveBtn = e.target.closest(".save-btn");
+      
+      if (planBtn) {
+        const destinationData = planBtn.dataset.destination;
+        if (destinationData) {
+          try {
+            const destination = JSON.parse(destinationData);
+            openPlanner(destination);
+          } catch (err) {
+            console.error("Error parsing destination data:", err);
+          }
+        }
+      }
+      
+      if (saveBtn) {
+        const destinationData = saveBtn.dataset.destination;
+        if (destinationData) {
+          try {
+            const destination = JSON.parse(destinationData);
+            saveTrip(destination);
+          } catch (err) {
+            console.error("Error parsing destination data:", err);
+          }
+        }
+      }
+      
+    });
   }
 });
 
@@ -655,10 +717,10 @@ function renderDestinations(destinations, highlighted = []) {
         </div>
 
         <div class="card-actions">
-          <button class="plan-trip-btn" onclick='openPlanner(${JSON.stringify(dest)})'>
+          <button class="plan-trip-btn" data-destination='${JSON.stringify(dest)}'>
             Plan Trip
           </button>
-          <button class="save-btn" onclick='saveTrip(${JSON.stringify(dest)})'>
+          <button class="save-btn" data-destination='${JSON.stringify(dest)}'>
             Save
           </button>
         </div>
@@ -674,19 +736,52 @@ function renderDestinations(destinations, highlighted = []) {
    🤖 AI CHAT
 ========================= */
 
+// Switch from welcome view to chat view
+function switchToChatView() {
+  const welcome = document.getElementById("ai-welcome");
+  const messages = document.getElementById("chat-messages");
+  
+  if (welcome && messages) {
+    welcome.style.display = "none";
+    messages.style.display = "flex";
+  }
+}
+
+// Suggestion button handler
+function sendSuggestionToChat(text) {
+  const input = document.getElementById("chat-input");
+  if (input) {
+    input.value = text;
+    sendMessage();
+  }
+}
+
 async function sendMessage() {
 
   const input = document.getElementById("chat-input");
   const message = input.value.trim();
   if (!message) return;
 
+  // Switch to chat view on first message
+  switchToChatView();
+
   const chatMessages = document.getElementById("chat-messages");
 
-  chatMessages.innerHTML += `<div class="user-msg">You: ${message}</div>`;
+  // Create user message element (no innerHTML)
+  const userMsg = document.createElement("div");
+  userMsg.className = "user-msg";
+  userMsg.textContent = `You: ${message}`;
+  chatMessages.appendChild(userMsg);
+  
   input.value = "";
 
+  // Create typing indicator element
   const typingId = "typing-" + Date.now();
-  chatMessages.innerHTML += `<div id="${typingId}" class="ai-msg typing">Tripolingo AI is typing...</div>`;
+  const typingMsg = document.createElement("div");
+  typingMsg.id = typingId;
+  typingMsg.className = "ai-msg typing";
+  typingMsg.textContent = "Tripolingo AI is typing...";
+  chatMessages.appendChild(typingMsg);
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -712,24 +807,22 @@ async function sendMessage() {
 
     await typeAIMessage(data.reply);
 
-    // 🌌 AI Background Reaction
-    document.body.classList.add("ai-background-flash");
-
-    setTimeout(() => {
-      document.body.classList.remove("ai-background-flash");
-    }, 800);
-
-    // ⭐ Highlight only if exists
-    if (data.suggested_destinations?.length && window.currentRecommendations) {
-      renderVisibleDestinations(data.suggested_destinations);
-
+    // ⭐ Scroll to suggested destination (only first match, no re-render)
+    if (data.suggested_destinations?.length) {
       scrollToSuggested(data.suggested_destinations);
     }
 
   } catch (err) {
     console.error("AI CHAT ERROR:", err);
     document.getElementById(typingId)?.remove();
-    chatMessages.innerHTML += `<div class="ai-msg" style="color:red">AI connection error.</div>`;
+    
+    // Create error message element (no innerHTML)
+    const errorMsg = document.createElement("div");
+    errorMsg.className = "ai-msg";
+    errorMsg.style.color = "red";
+    errorMsg.textContent = "AI connection error.";
+    chatMessages.appendChild(errorMsg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 }
 
@@ -740,33 +833,36 @@ async function typeAIMessage(text) {
 
   const msgDiv = document.createElement("div");
   msgDiv.className = "ai-msg";
-  msgDiv.innerHTML = "Tripolingo AI: ";
+  msgDiv.textContent = "Tripolingo AI: ";
 
   chatMessages.appendChild(msgDiv);
 
+  // Type character by character using textContent
   for (let i = 0; i < text.length; i++) {
-    msgDiv.innerHTML += text[i];
+    msgDiv.textContent += text[i];
     await new Promise(r => setTimeout(r, 8)); // typing speed
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 }
 
 function scrollToSuggested(list) {
-
   const cards = document.querySelectorAll(".card");
-
-  cards.forEach(card => {
-    const title = card.querySelector("h3").innerText;
-
-    list.forEach(name => {
+  
+  // Only scroll to the first matching destination to avoid multiple scrolls
+  for (const card of cards) {
+    const title = card.querySelector("h3")?.innerText;
+    if (!title) continue;
+    
+    for (const name of list) {
       if (title.includes(name)) {
         card.scrollIntoView({
           behavior: "smooth",
           block: "center"
         });
+        return; // Exit after first match
       }
-    });
-  });
+    }
+  }
 }
 
 /* =========================

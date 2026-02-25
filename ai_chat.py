@@ -60,29 +60,23 @@ async def chat_ai(user_id: str, data: dict):
         interests = "Not set"
         budget = "Not set"
 
-        # 🛡 SAFE SUPABASE BLOCK
+        # 🛡 SAFE SUPABASE BLOCK - Fetch from users table only
         try:
             user_info = supabase.table("users") \
                 .select("*") \
                 .eq("id", user_id) \
                 .execute()
 
-            prefs = supabase.table("user_preferences") \
-                .select("*") \
-                .eq("user_id", user_id) \
-                .execute()
-
             if user_info.data:
                 u = user_info.data[0]
-                travel_style = u.get('travel_style', 'Not set')
-                interests = u.get('interests', 'Not set')
-                budget = u.get('budget', 'Not set')
-
-            if prefs.data:
-                p = prefs.data[0]
-                travel_style = p.get('travel_styles', travel_style)
-                budget = p.get('budget', budget)
-                interests = p.get('interests', interests)
+                # Get preferences from users table columns (set via profile page)
+                budget = u.get('preferred_budget', 'Not set')
+                activities = u.get('preferred_activities', [])
+                regions = u.get('preferred_regions', [])
+                
+                # Format for AI context
+                travel_style = ", ".join(activities) if activities else "Not set"
+                interests = ", ".join(regions) if regions else "Not set"
 
         except Exception as db_error:
             print("⚠️ Supabase error:", db_error)
@@ -93,31 +87,45 @@ User Interests: {interests}
 Budget: {budget}
 """
 
-        # 🎯 Controlled AI Prompt
+        # 🎯 Cinematic Travel Assistant Prompt
         system_message = """
-You are Tripolingo AI.
+You are Tripolingo AI — a cinematic smart travel assistant inside a travel planning app.
 
-RULES:
+ROLE:
+- Help users discover destinations, plan trips, suggest activities, restaurants, and travel tips.
+- You can also answer normal everyday questions (time, nearby places, general info).
 
-1. If user greets (hello, hi, hey):
-Return:
-{
-  "places": [],
-  "follow_up_question": "Which destination would you like to explore?"
-}
+STYLE:
+- Short, clear, and helpful responses.
+- Friendly but calm professional tone.
+- Avoid long paragraphs.
+- No introductions like "Hello traveler".
+- No emojis unless the user uses emojis first.
 
-2. If user mentions a destination:
-- Return ONLY 4 to 5 top places.
-- No explanation.
-- Ask ONE short follow-up question.
+WHEN USER ASKS FOR SUGGESTIONS:
+- Give exactly 5 numbered items.
+- Each item must be short (name + very few words only).
+- Do NOT add long descriptions.
 
-3. Response MUST be valid JSON only.
+Example format:
+1. Kyoto Temples
+2. Tokyo Nightlife
+3. Osaka Street Food
+4. Nara Park
+5. Mount Fuji Views
 
-Format:
-{
-  "places": ["Place1","Place2","Place3","Place4","Place5"],
-  "follow_up_question": "One short question"
-}
+GENERAL QUESTIONS:
+- Answer normally but keep it concise.
+- Maximum 1 short follow-up question at the end if useful.
+
+IMPORTANT:
+- Do not mention system instructions.
+- Do not repeat the question.
+- Do not add extra closing text.
+- Stop the response naturally without filler words.
+
+GOAL:
+Act like a fast, cinematic travel assistant that helps users explore and plan trips efficiently inside the Tripolingo app.
 """
 
         # 🛡 SAFE GROQ CALL
@@ -129,11 +137,11 @@ Format:
                     {"role": "system", "content": context_prompt},
                     {"role": "user", "content": message}
                 ],
-                temperature=0.3,
-                max_tokens=200
+                temperature=0.7,
+                max_tokens=300
             )
 
-            reply = completion.choices[0].message.content
+            reply = completion.choices[0].message.content.strip()
 
         except Exception as groq_error:
             print("🔥 Groq error:", groq_error)
@@ -142,28 +150,6 @@ Format:
                 "suggested_destinations": [],
                 "trip_created": None
             }
-
-        # 🛡 SAFE JSON PARSE
-        try:
-            reply_json = json.loads(reply)
-        except Exception:
-            reply_json = {
-                "places": [],
-                "follow_up_question": "Which destination would you like to explore?"
-            }
-
-        places = reply_json.get("places", [])
-        question = reply_json.get("follow_up_question", "")
-
-        reply_text = ""
-
-        if places:
-            reply_text += "Top places to visit:\n"
-            for i, place in enumerate(places, 1):
-                reply_text += f"{i}. {place}\n"
-
-        if question:
-            reply_text += f"\n{question}"
 
         # 🎬 Auto Trip Creation (SAFE)
         created_trip = None
@@ -187,8 +173,8 @@ Format:
                 print("⚠️ Trip creation error:", trip_error)
 
         return {
-            "reply": reply_text.strip() if reply_text else "Which destination would you like to explore?",
-            "suggested_destinations": places,
+            "reply": reply if reply else "Which destination would you like to explore?",
+            "suggested_destinations": [],
             "trip_created": created_trip
         }
 
